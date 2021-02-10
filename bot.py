@@ -44,7 +44,7 @@ async def leaderboard(ctx):
     await msg_id.edit(content=msg)
 
 
-@tasks.loop(hours=2)
+@tasks.loop(hours=1.0)
 async def update_leaderboard():
     load_leaderboard()
     # check for message
@@ -53,8 +53,10 @@ async def update_leaderboard():
     global board_msg
     with open('leaderboard', 'rb') as img:
         if board_msg is not None:
-                await board_msg.edit(content="SoloQ Leaderboard at {}".format(timestamp),
+                await board_msg.delete()
+                msg = await channel.send(content="SoloQ Leaderboard at {}".format(timestamp),
                                file=discord.File(img, 'leaderboard-{}.png'.format(timestamp)))
+                board_msg = msg
                 print('Leaderboard updated')
         else:
                 msg = await channel.send(content="SoloQ Leaderboard at {}".format(timestamp),
@@ -73,7 +75,6 @@ async def on_ready():
         for m in messages_liga:
             print(m.id, ' borrado')
             await m.delete()
-    # await send_leaderboard()
     await update_leaderboard.start()
 
 
