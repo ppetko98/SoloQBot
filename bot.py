@@ -3,6 +3,7 @@ from discord.ext import commands, tasks
 import statsLoL
 import json
 from time import sleep
+from datetime import datetime
 
 
 def load_conf():
@@ -18,41 +19,56 @@ def load_conf():
 TOKEN = ''
 GUILD = ''
 COMMAND = '!'
-CHANNEL_ID = ''
-# client = discord.Client()
+CHANNEL_ID = 0
 
 load_conf()
 
 bot = commands.Bot(command_prefix=COMMAND)
 
+board_msg = None
+leaderboard_message_id = ''
+
+
+async def load_leaderboard():
+    await statsLoL.main()
+
 
 @bot.command(name='leaderboard', help='Prints the actual leaderboard', pass_context=True)
 async def leaderboard(ctx):
-    await ctx.send("Aqui deberia meter la tabla de puntuaciones")
+    table = statsLoL.get_table()
+    msg = ''
+    for i, r in table.iterrows():
+        msg += f'{i}. {r["Alias"]} *\"{r["Summoner"]}\"*: {r["Division"]} {r["Rank"]} {r["LPs"]} PLs\n'
+    await ctx.send(msg)
 
 
-@tasks.loop(hours=1)
+@tasks.loop(hours=6)
 async def update_leaderboard():
+    await load_leaderboard()
+    # check for message
     channel = bot.get_channel(CHANNEL_ID)
-    msg = await channel.send("leaderboard")
-    leaderboard_message_id = msg.id
+    timestamp = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+    if board_msg is not None:
+        with open('leaderboard.png', 'rb') as img:
+            board_msg.edit(content="SoloQ Leaderboard at {}".format(timestamp), file=img)
+    else:
+        with open('leaderboard.png', 'rb') as img:
+            msg = await channel.send(content="SoloQ Leaderboard at {}".format(timestamp),
+                                     file=discord.File(img, 'leaderboard-{}.png'.format(timestamp)))
+            global leaderboard_message_id
+            leaderboard_message_id = msg.id
 
 
 @bot.event
 async def on_ready():
-    # update_leaderboard.start()
     channel_liga = bot.get_channel(CHANNEL_ID)
     messages_liga = await channel_liga.history().flatten()
-    # content = get_table()
     if messages_liga:
         for m in messages_liga:
-            # print('{}\t{}\t{}\n'.format(m.id, m.content, m.author))
             await m.delete()
-    # await update_table()
-
-    guild = discord.utils.get(bot.guilds, name=GUILD)
-    print('Bot is connected to: ', guild)
-
+    # await send_leaderboard()
+    await update_leaderboard.start()
+    # guild = discord.utils.get(bot.guilds, name=GUILD)
 
 bot.run(TOKEN)
 
