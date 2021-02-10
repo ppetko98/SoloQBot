@@ -8,37 +8,39 @@ import imgkit
 # 20 requests every 1 seconds(s)
 # 100 requests every 2 minutes(s)
 
-API_KEY = 'RGAPI-3136be7b-99aa-44e8-95fa-5bfa50783cc2'
+API_KEY = ''
+SUMMONERS_LIST = []
 
 
-SUMMONERS_LIST = [('Amemo', 'Rodrigo'), ('TristanaBacana', 'Adrian'), ('Sazonadör', 'Santiago'),
-                 ('kSalsaKiereChico', 'Petko'), ('Escapatraj0', 'Manuel'), ('Jäx Teller', 'Shalo'),
-                 ('Chiquistruquis', 'Mario'), ('I äm not Fäker', 'Xichen'), ('CalvusDumbledore', 'Juancar')]
+def load_conf():
+    with open('config.json') as conf:
+        global API_KEY, SUMMONERS_LIST
+        data = json.load(conf)
+        API_KEY = data['api-key']
+        SUMMONERS_LIST = [(list(i.keys())[0], list(i.values())[0]) for i in data['summoners-list']]
 
 
 def get_account(summoner):
     account_url = 'https://euw1.api.riotgames.com/lol/summoner/v4/summoners/by-name/{}?api_key={}'.format(
         summoner.replace(' ', '%20'), API_KEY)
-    response = requests.get(account_url)  # devuelve summ id, acc id, puuid
+    response = requests.get(account_url)  # returns summ id, acc id, puuid
     return response
 
 
 def get_stats(summoner):
     response = get_account(summoner)
     id = response.json()['id']  # summoner id
-    # print(response.json()['accountId'])
-    # print(id)
     summoner_name = summoner
     stats_url = 'https://euw1.api.riotgames.com/lol/league/v4/entries/by-summoner/{}?api_key={}'.format(id, API_KEY)
     acc_stats = requests.get(stats_url).json()
     try:
         summoner_name = acc_stats[0]['summonerName']
         acc_stats_cleaned = [
-            {'Name': i['summonerName'], 'Division': i['tier'], 'Rango': i['rank'], 'PLs': i['leaguePoints'],
+            {'Summoner': i['summonerName'], 'Division': i['tier'], 'Rank': i['rank'], 'LPs': i['leaguePoints'],
              'totalMatches': int(i['wins']) + int(i['losses']), 'wins': i['wins'], 'losses': i['losses']} for i in
             acc_stats if i['queueType'] == 'RANKED_SOLO_5x5'][0]
     except IndexError:
-        return {'Summoner': summoner_name, 'Division': 'UNRANKED', 'Rango': '-', 'PLs': 0, 'totalMatches': -1, 'wins': 0,
+        return {'Summoner': summoner_name, 'Division': 'UNRANKED', 'Rank': '-', 'PLs': 0, 'totalMatches': -1, 'wins': 0,
                 'losses': 0}
     return acc_stats_cleaned
 
@@ -67,8 +69,8 @@ def get_table():
                                     categories=["CHALLENGER", "GRANDMASTER", "MASTER", "DIAMOND", "PLATINUM", "GOLD",
                                                 "SILVER", "BRONZE", "IRON", "UNRANKED"])
     df["Win rate %"] = round(df['wins'] / df['totalMatches'] * 100, 2)
-    df = df.reindex(columns=["Alias", "Summoner", "Division", "Rango", "PLs", "totalMatches", "wins", "losses", "Win rate %"])
-    table = df.sort_values(by=['Division', 'Rango', 'PLs'], ascending=[True, True, False]).reset_index(drop=True)
+    df = df.reindex(columns=["Alias", "Summoner", "Division", "Rank", "LPs", "totalMatches", "wins", "losses", "Win rate %"])
+    table = df.sort_values(by=['Division', 'Rank', 'PLs'], ascending=[True, True, False]).reset_index(drop=True)
     table.index += 1
     pd.set_option('display.max_rows', None, 'display.max_columns', None)
     return table
@@ -112,7 +114,8 @@ def generate_png():
 
 
 def main():
-    generate_png()
+    load_conf()
+    # generate_png()
     # generate_img_from_table(get_table())
 
 

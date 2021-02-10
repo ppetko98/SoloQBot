@@ -1,6 +1,8 @@
 {
-  "token": "ODA4NzY0OTgyMTk5NTgyNzMx.YCLTFQ.2xtXRG3pEGPe9eWMlicwfjXGkFo",
-  "guild": "TILT SQUAD",
+  "discord-token": "{REPLACE WITH YOUR DISCORD BOT TOKEN}",
+  "guild": "{REPLACE WITH YOUR DISCORD SERVER}",
   "prefix": "+",
-
+  "channel": "{REPLACE WITH CHANNEL ID TO SEND LEADERBOARD}",
+  "api-key": "{REPLACE WITH LOL API KEY}",
+  "summoners-list": [{"summoner_name1": "alias1"}, {"summoner_name2": "alias2"}]
 }

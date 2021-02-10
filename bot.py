@@ -1,27 +1,29 @@
-# bot token
-# ODA4NzY0OTgyMTk5NTgyNzMx.YCLTFQ.2xtXRG3pEGPe9eWMlicwfjXGkFo
-# cargar librerias
-
 import discord
-from dotenv import load_dotenv
 from discord.ext import commands, tasks
 import statsLoL
-import os
+import json
 from time import sleep
 
-load_dotenv()
 
-TOKEN = 'ODA4NzY0OTgyMTk5NTgyNzMx.YCLTFQ.2xtXRG3pEGPe9eWMlicwfjXGkFo'
-GUILD = 'TILT SQUAD'
+def load_conf():
+    with open('config.json') as conf:
+        global TOKEN, GUILD, COMMAND, CHANNEL_ID
+        data = json.load(conf)
+        TOKEN = data['discord-token']
+        GUILD = data['guild']
+        COMMAND = data['prefix']
+        CHANNEL_ID = int(data['channel'])
 
+
+TOKEN = ''
+GUILD = ''
+COMMAND = '!'
+CHANNEL_ID = ''
 # client = discord.Client()
-bot = commands.Bot(command_prefix='+')
 
-leaderboard_message_id = 808828682181279794
+load_conf()
 
-
-async def update_table():
-    return
+bot = commands.Bot(command_prefix=COMMAND)
 
 
 @bot.command(name='leaderboard', help='Prints the actual leaderboard', pass_context=True)
@@ -31,7 +33,7 @@ async def leaderboard(ctx):
 
 @tasks.loop(hours=1)
 async def update_leaderboard():
-    channel = bot.get_channel(808638690678407228)
+    channel = bot.get_channel(CHANNEL_ID)
     msg = await channel.send("leaderboard")
     leaderboard_message_id = msg.id
 
@@ -39,7 +41,7 @@ async def update_leaderboard():
 @bot.event
 async def on_ready():
     # update_leaderboard.start()
-    channel_liga = bot.get_channel(808638690678407228)
+    channel_liga = bot.get_channel(CHANNEL_ID)
     messages_liga = await channel_liga.history().flatten()
     # content = get_table()
     if messages_liga:
@@ -50,6 +52,7 @@ async def on_ready():
 
     guild = discord.utils.get(bot.guilds, name=GUILD)
     print('Bot is connected to: ', guild)
+
 
 bot.run(TOKEN)
 
