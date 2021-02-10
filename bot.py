@@ -31,7 +31,6 @@ leaderboard_message_id = ''
 
 def load_leaderboard():
     statsLoL.main()
-    print('Vuelta del main')
 
 
 @bot.command(name='leaderboard', help='Prints the actual leaderboard', pass_context=True)
@@ -45,25 +44,23 @@ async def leaderboard(ctx):
     await msg_id.edit(content=msg)
 
 
-@tasks.loop(seconds=20)
+@tasks.loop(hours=2)
 async def update_leaderboard():
-    print('Llamada a update')
     load_leaderboard()
     # check for message
-    print('Ha pasado el load')
     channel = bot.get_channel(CHANNEL_ID)
     timestamp = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
     global board_msg
-    if board_msg is not None:
-        with open('leaderboard.png', 'rb') as img:
-            await board_msg.edit(content="SoloQ Leaderboard at {}".format(timestamp),
-                           file=discord.File(img, 'leaderboard-{}.png'.format(timestamp)))
-    else:
-        with open('leaderboard.png', 'rb') as img:
-            msg = await channel.send(content="SoloQ Leaderboard at {}".format(timestamp),
-                                     file=discord.File(img, 'leaderboard-{}.png'.format(timestamp)))
-            board_msg = msg
-    print('Mensaje enviado')
+    with open('leaderboard', 'rb') as img:
+        if board_msg is not None:
+                await board_msg.edit(content="SoloQ Leaderboard at {}".format(timestamp),
+                               file=discord.File(img, 'leaderboard-{}.png'.format(timestamp)))
+                print('Leaderboard updated')
+        else:
+                msg = await channel.send(content="SoloQ Leaderboard at {}".format(timestamp),
+                                         file=discord.File(img, 'leaderboard-{}.png'.format(timestamp)))
+                board_msg = msg
+                print('Leaderboard sent')
 
 
 @bot.event
