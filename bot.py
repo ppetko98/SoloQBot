@@ -36,14 +36,16 @@ def load_leaderboard():
 
 @bot.command(name='leaderboard', help='Prints the actual leaderboard', pass_context=True)
 async def leaderboard(ctx):
+    msg_id = await ctx.send("Cargando el leaderboard de SoloQ...")
+    # msg_id = msg_id.id
     table = statsLoL.get_table()
     msg = ''
     for i, r in table.iterrows():
         msg += f'{i}. {r["Alias"]} *\"{r["Summoner"]}\"*: {r["Division"]} {r["Rank"]} {r["LPs"]} PLs\n'
-    await ctx.send(msg)
+    await msg_id.edit(content=msg)
 
 
-@tasks.loop(hours=6)
+@tasks.loop(seconds=20)
 async def update_leaderboard():
     print('Llamada a update')
     load_leaderboard()
@@ -51,16 +53,17 @@ async def update_leaderboard():
     print('Ha pasado el load')
     channel = bot.get_channel(CHANNEL_ID)
     timestamp = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+    global board_msg
     if board_msg is not None:
         with open('leaderboard.png', 'rb') as img:
-            board_msg.edit(content="SoloQ Leaderboard at {}".format(timestamp),
+            await board_msg.edit(content="SoloQ Leaderboard at {}".format(timestamp),
                            file=discord.File(img, 'leaderboard-{}.png'.format(timestamp)))
     else:
         with open('leaderboard.png', 'rb') as img:
             msg = await channel.send(content="SoloQ Leaderboard at {}".format(timestamp),
                                      file=discord.File(img, 'leaderboard-{}.png'.format(timestamp)))
-            global leaderboard_message_id
-            leaderboard_message_id = msg.id
+            board_msg = msg
+    print('Mensaje enviado')
 
 
 @bot.event
