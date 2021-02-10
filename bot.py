@@ -29,8 +29,9 @@ board_msg = None
 leaderboard_message_id = ''
 
 
-async def load_leaderboard():
-    await statsLoL.main()
+def load_leaderboard():
+    statsLoL.main()
+    print('Vuelta del main')
 
 
 @bot.command(name='leaderboard', help='Prints the actual leaderboard', pass_context=True)
@@ -44,13 +45,16 @@ async def leaderboard(ctx):
 
 @tasks.loop(hours=6)
 async def update_leaderboard():
-    await load_leaderboard()
+    print('Llamada a update')
+    load_leaderboard()
     # check for message
+    print('Ha pasado el load')
     channel = bot.get_channel(CHANNEL_ID)
     timestamp = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
     if board_msg is not None:
         with open('leaderboard.png', 'rb') as img:
-            board_msg.edit(content="SoloQ Leaderboard at {}".format(timestamp), file=img)
+            board_msg.edit(content="SoloQ Leaderboard at {}".format(timestamp),
+                           file=discord.File(img, 'leaderboard-{}.png'.format(timestamp)))
     else:
         with open('leaderboard.png', 'rb') as img:
             msg = await channel.send(content="SoloQ Leaderboard at {}".format(timestamp),
@@ -62,13 +66,16 @@ async def update_leaderboard():
 @bot.event
 async def on_ready():
     channel_liga = bot.get_channel(CHANNEL_ID)
+    guild = discord.utils.get(bot.guilds, name=GUILD)
+    print('Connected to ', guild)
     messages_liga = await channel_liga.history().flatten()
     if messages_liga:
         for m in messages_liga:
+            print(m.id, ' borrado')
             await m.delete()
     # await send_leaderboard()
     await update_leaderboard.start()
-    # guild = discord.utils.get(bot.guilds, name=GUILD)
+
 
 bot.run(TOKEN)
 

@@ -112,7 +112,7 @@ def generate_img_from_table(table):
         </style>
         """
     filename = "leaderboard.html"
-    with io.open(filename, 'a', encoding='utf8') as fp:
+    with io.open(filename, 'w', encoding='utf8') as fp:
         fp.write(css)
         fp.write(table.to_html(classes=["table", "table-striped", "bg-dark", "table-hover", "thead-dark"]))
     imgkitoptions = {"format": "png", "encoding": "utf8"}
@@ -126,7 +126,18 @@ def generate_png():
 
 def main():
     load_conf()
-    generate_img_from_table(get_table())
+    try:
+        generate_img_from_table(get_table())
+    except KeyError:
+        print('Error en consulta a API, reintentar mas tarde')
+        return 1
+    except FileNotFoundError:
+        print('Error al generar tablon!')
+        return 1
+    except OSError:
+        print('Error al generar tablon!')
+        return 1
+    return 0
 
 
 if __name__ == "__main__":
